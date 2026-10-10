@@ -10,10 +10,11 @@ I wrote a binary search tree and a hash table in Java without using the standard
 
 - src/main/java/
 - IntMap.java 
-- BST.java .
+- BST.java 
 - MyHashTable.java 
 - Tests.java 
-- Benchmark.java 
+- Benchmark.java
+
 - results.csv 
 
 ## How to run
@@ -101,7 +102,9 @@ The BST without balancing is good only when the keys come in a random order. Wit
 
 So my answer to the question "which one is better" is: it depends on what I need. If I only need to find, add and remove by key, I would choose a hash table. If I need the keys in sorted order, the minimum, or a range of keys, I would choose a balanced BST, because a hash table cannot do this. And I would never trust big-O alone: the measurements showed that constants, memory and the input order change the real time a lot.
 
-About the work itself: [the hardest part for me was the delete in the BST for the node with two children / the hardest part was resize in the hash table, because I had to save the next pointer before moving the node / the hardest part was making the measurements fair, for example I saw that deleting sorted keys in the same order made the BST look fast, so I changed the order to reverse]. [Writing the test with HashSet helped me to find mistakes quickly.] If I did it again, I would test more sizes than three, and also add a balanced tree to the comparison.
+About the work itself: the trickiest parts of the code were the delete in the BST and the resize in the hash table. In the BST delete there are three cases, and the case with two children is the hardest, because I have to find the smallest node in the right subtree and also fix the link of its parent. In the resize I must save the next node before I move the current one to the new array, otherwise the rest of the chain is lost. The tests with HashSet were useful to check that these two parts work. If I did this project again, I would test more sizes than three and add a balanced tree to the comparison.
+
+
 
 ## Limitations
 

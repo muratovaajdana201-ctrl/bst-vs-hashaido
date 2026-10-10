@@ -1,4 +1,4 @@
-   out/
-   *.class
-   target/
-   .idea/
+out/
+target/
+.idea/
+*.class

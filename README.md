@@ -34,14 +34,19 @@ Run Tests.main() first, it should print that all tests passed. Then run Benchmar
 Here n is the number of elements and h is the height of the tree.
 
 For the BST, every operation costs about h steps, because we walk one path from the root down.
-- Insert, search and delete, best case: O(1), for example when the key is in the root.
-- Average case: O(log n), if the keys come in random order and the tree stays more or less balanced.
-- Worst case: O(n). If the keys come sorted, every new key goes to the right and the tree becomes a linked list with height n.
+Insert, search and delete have a best-case time complexity of O(1). For example, searching for the root takes constant time, and inserting into an empty tree also takes constant time. The actual time depends on the tree structure and the position of the key.
+
+Average case: O(log n), if the keys come in random order and the tree stays more or less balanced.
+
+ Worst case: O(n). If the keys come sorted, every new key goes to the right and the tree becomes a linked list with height n.
 
 For the hash table, an operation costs one index calculation plus walking along one chain.
-- Insert, search and delete, best case: O(1).
-- Average case: O(1). With a good hash function the chains are short, and resize keeps the load factor under 0.75. Insert is O(1) amortized, because one resize costs O(n) but happens rarely since the array doubles each time.
-- Worst case: O(n), when many keys land in the same bucket and the chain is as long as the whole table. Insert also checks for duplicates by walking the chain, so insert becomes O(n) too.
+
+ Insert, search and delete, best case: O(1).
+
+ Average case: O(1). With a good hash function the chains are short, and resize keeps the load factor under 0.75. Insert is O(1) amortized, because one resize costs O(n) but happens rarely since the array doubles each time.
+
+Worst case: O(n), when many keys land in the same bucket and the chain is as long as the whole table. Insert also checks for duplicates by walking the chain, so insert becomes O(n) too.
 
 Both structures use O(n) memory.
 
@@ -49,7 +54,7 @@ Both structures use O(n) memory.
 
 For each size n (100, 1,000, 10,000) I used keys 0 to n-1 in two orders: random (shuffled with seed 42) and sorted. I measured three phases, each for all n elements one after another: insert all, search all, delete all. Delete goes in reverse order of insertion. If I deleted sorted keys in the same order, the BST would always remove the root with no left child and look fast, which is not fair.
 
-Every measurement starts with an empty structure. I did <WARMUP> warm-up runs first, so Java has time to optimize the code, then <RUNS> measured runs, and I took the median. The times are in microseconds for the whole phase, not for one operation. I tested three versions: the BST, the hash table, and the hash table with the bad hash.
+Every measurement starts with an empty structure. I performed 300 warm-up runs to give the Java JIT compiler time to optimize the code. Then I performed 51 measured runs and took the median time. The times are in microseconds for the whole phase, not for one operation. I tested three versions: the BST, the hash table, and the hash table with the bad hash.
 
 ### Results for n = 10,000
 
@@ -71,13 +76,13 @@ All the numbers are in results.csv.
 
 ## What I noticed
 
-When n grew from 1,000 to 10,000 (10 times more), the sorted BST became about 100 times slower. For example, insert went from 1,360 to 141,072 µs. That is what O(n squared) looks like: n operations and each one costs O(n). The hash table with the bad hash also became about 100 times slower for insert (1,228 to 121,449 µs). The normal hash table and the BST with random keys grew much less, roughly 15 to 30 times.
+When n grew from 1,000 to 10,000 (10 times more), the sorted BST became about 100 times slower. For example, insert went from 1,360 to 141,072 µs. That is what O(n squared) looks like: n operations and each one costs O(n). The hash table with the bad hash also became about 100 times slower for insert (1,228 to 121,449 µs). The growth was different for each structure and operation. The sorted BST and the hash table with the bad hash function showed a much larger increase in time than the normal hash table. Small measurements were less stable, so I focused more on the general trend than on tiny differences.
 
 At n = 10,000 the sorted BST was about 110 times slower than the random BST for insert, and about 200 times slower for search. It is the same code and the same keys, only the order is different.
 
 The hash table did not care about the order of keys. Insert was 535 µs for random keys and 537 µs for sorted keys.
 
-On random data the hash table was faster than the BST: about 2.4 times for insert and about 6 times for search and delete. For one search that is about 13 ns against 80 ns.
+On random data the hash table was faster than the BST: about 2.4 times for insert and about 6 times for search and delete. Dividing the total search time by 10,000 gives an estimated average of about 13 ns per search for the normal hash table and about 81 ns for the random BST. These values are estimates based on the total time, not separate measurements of individual searches.
 
 Some results look strange, for example at n = 1,000 the hash table insert with random keys was 94 µs and with sorted keys 24 µs, although the work is the same. I think this is noise from the JIT compiler and the garbage collector. Also the BST random insert at n = 100 was 9.1 µs in this run and 2.4 µs in a run I did before. Because of this I do not trust small differences at n = 100.
 
@@ -96,7 +101,7 @@ In the bad hash table delete was cheaper than insert and search. I think it is b
 
 After this project I understand much better why people say "hash table is O(1)" and "BST is O(log n)", and also when these sentences are not true.
 
-The hash table was the fastest structure in all big tests. At 10,000 elements it did a search in about 13 ns, and the BST needed about 80 ns on random data. It also did not care if the keys were sorted or random, because the mix step breaks any pattern. But the fast speed depends on two things: a good hash function and a table that is not too full. When I made all keys go to one bucket, the same hash table became about 100 times slower when n grew 10 times, so it behaved like a linked list.
+The normal hash table was the fastest structure in my large tests. However, the version with the bad hash function was much slower because all keys were stored in one bucket. At 10,000 elements it did a search in about 13 ns, and the BST needed about 80 ns on random data. It also did not care if the keys were sorted or random, because the mix step breaks any pattern. But the fast speed depends on two things: a good hash function and a table that is not too full. When I made all keys go to one bucket, the same hash table became about 100 times slower when n grew 10 times, so it behaved like a linked list.
 
 The BST without balancing is good only when the keys come in a random order. With random keys its height was 30 for 10,000 elements and the times were fine. With sorted keys the height was 10,000 and the tree was just a linked list, so one search took about 16 µs instead of 80 ns. This was the biggest surprise for me, because the code is exactly the same and only the order of the keys is different. In real programs sorted input is very common (ids, dates), so a plain BST is risky. A balanced tree like AVL or Red-Black would solve this problem, and I think it is the next step if I wanted to improve this project.
 
